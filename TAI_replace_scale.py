@@ -17,9 +17,10 @@ def replace_scale():
 
         img_original = cv2.cvtColor(img_original_3c, cv2.COLOR_BGR2BGRA)
         del img_original_scale_3c
+        del img_original_3c
 
         rgb_size = 30
-        rgb_values = img_original[top_left[1]-rgb_size:top_left[1], top_left[0]:top_left[0]+rgb_size]
+        rgb_values = img_original[top_left[1] - rgb_size:top_left[1], top_left[0]:top_left[0] + rgb_size]
 
         mean_blue = int(np.round(np.mean(rgb_values[:, :, 0])))
         mean_green = int(np.round(np.mean(rgb_values[:, :, 1])))
@@ -33,7 +34,7 @@ def replace_scale():
         transparent.paste(base_image, (0, 0))
         transparent.paste((mean_red, mean_green, mean_blue, 255), top_left, mask=img_original_scale)
         transparent.paste(watermark, top_left, mask=watermark)
-        transparent.save('./output/' + filename, compression='tiff_jpeg', dpi=(300, 300), quality=100)
+        transparent.save('./output/' + filename, compression='tiff_jpeg', quality=100, dpi=(300, 300))
 
         print(filename + ' is ok! / Max_val = ' + str(max_val))
 
