@@ -8,16 +8,17 @@ def replace_scale():
     all_file = glob.glob('*.tif')
     for filename in all_file:
 
-        img_original_3c = cv2.imread('./' + filename)
-        img_original_scale_3c = cv2.imread('./scale/dpi300.tif')
+        img_original = cv2.imread('./' + filename)
+        img_original_gray = cv2.cvtColor(img_original, cv2.COLOR_BGR2GRAY)
+        scale_original = cv2.imread('./scale/dpi300.tif', 0)
 
-        res = cv2.matchTemplate(img_original_3c, img_original_scale_3c, cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(img_original_gray, scale_original, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_point, max_point = cv2.minMaxLoc(res)
         top_left = max_point
 
-        img_original = cv2.cvtColor(img_original_3c, cv2.COLOR_BGR2BGRA)
-        del img_original_scale_3c
-        del img_original_3c
+        if max_val < 0.75:
+            with open('val_lower_than_0point75.txt', mode='a') as F:
+                F.write(filename + ' Max_val = ' + str(max_val) + '\n')
 
         rgb_size = 30
         rgb_values = img_original[top_left[1] - rgb_size:top_left[1], top_left[0]:top_left[0] + rgb_size]
@@ -26,13 +27,17 @@ def replace_scale():
         mean_green = int(np.round(np.mean(rgb_values[:, :, 1])))
         mean_red = int(np.round(np.mean(rgb_values[:, :, 2])))
 
+        del img_original
+        del img_original_gray
+        del scale_original
+
         base_image = Image.open('./' + filename)
-        img_original_scale = Image.open('./scale/dpi300_alpha.tif')
+        scale_original_4c = Image.open('./scale/dpi300_alpha.tif')
         watermark = Image.open('./scale/dpi600.tif')
         width, height = base_image.size
         transparent = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         transparent.paste(base_image, (0, 0))
-        transparent.paste((mean_red, mean_green, mean_blue, 255), top_left, mask=img_original_scale)
+        transparent.paste((mean_red, mean_green, mean_blue, 255), top_left, mask=scale_original_4c)
         transparent.paste(watermark, top_left, mask=watermark)
         transparent.save('./output/' + filename, compression='tiff_jpeg', quality=100, dpi=(300, 300))
 
