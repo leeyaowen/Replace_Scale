@@ -2,22 +2,26 @@ import cv2
 import numpy as np
 from PIL import Image
 import glob
+import timeit
 
 
 def replace_scale():
     all_file = glob.glob('*.tif')
     for filename in all_file:
 
+        start = timeit.default_timer()
+
         img_original = cv2.imread('./' + filename)
         img_original_gray = cv2.cvtColor(img_original, cv2.COLOR_BGR2GRAY)
+        img_original_gray_dn = cv2.fastNlMeansDenoising(img_original_gray, None, 20, 5, 15)
         scale_original = cv2.imread('./scale/dpi300.tif', 0)
 
-        res = cv2.matchTemplate(img_original_gray, scale_original, cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(img_original_gray_dn, scale_original, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_point, max_point = cv2.minMaxLoc(res)
         top_left = max_point
 
-        if max_val < 0.75:
-            with open('val_lower_than_0point75.txt', mode='a') as F:
+        if max_val < 0.8:
+            with open('val_lower_than_0point8.txt', mode='a') as F:
                 F.write(filename + ' Max_val = ' + str(max_val) + '\n')
 
         rgb_size = 30
@@ -41,9 +45,12 @@ def replace_scale():
         transparent.paste(watermark, top_left, mask=watermark)
         transparent.save('./output/' + filename, compression='tiff_jpeg', quality=100, dpi=(300, 300))
 
-        print(filename + ' is ok! / Max_val = ' + str(max_val))
+        stop = timeit.default_timer()
+
+        print(filename + ' is ok! / Max_val = ' + str(max_val) + ' / time : ' + str(stop-start))
 
 
 if __name__ == '__main__':
     replace_scale()
+
 
