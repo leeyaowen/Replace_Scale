@@ -3,20 +3,23 @@ import numpy as np
 from PIL import Image
 import glob
 import timeit
+import os
 
 
 def replace_scale():
-    all_file = glob.glob('*.tif')
+    InputPath = input('Input Path=?\n')
+    OutputPath = input('Output Path=?\n')
+    all_file = glob.glob('./' + InputPath + '/*.tif')
     for filename in all_file:
 
         start = timeit.default_timer()
 
-        img_original = cv2.imread('./' + filename)
+        img_original = cv2.imread(filename)
         img_original_gray = cv2.cvtColor(img_original, cv2.COLOR_BGR2GRAY)
-        img_original_gray_dn = cv2.fastNlMeansDenoising(img_original_gray, None, 20, 5, 15)
+        # img_original_gray_dn = cv2.fastNlMeansDenoising(img_original_gray, None, 20, 5, 15)
         scale_original = cv2.imread('./scale/dpi300.tif', 0)
 
-        res = cv2.matchTemplate(img_original_gray_dn, scale_original, cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(img_original_gray, scale_original, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_point, max_point = cv2.minMaxLoc(res)
         top_left = max_point
 
@@ -35,7 +38,7 @@ def replace_scale():
         del img_original_gray
         del scale_original
 
-        base_image = Image.open('./' + filename)
+        base_image = Image.open(filename)
         scale_original_4c = Image.open('./scale/dpi300_alpha.tif')
         watermark = Image.open('./scale/dpi600.tif')
         width, height = base_image.size
@@ -43,14 +46,15 @@ def replace_scale():
         transparent.paste(base_image, (0, 0))
         transparent.paste((mean_red, mean_green, mean_blue, 255), top_left, mask=scale_original_4c)
         transparent.paste(watermark, top_left, mask=watermark)
-        transparent.save('./output/' + filename, compression='tiff_jpeg', quality=100, dpi=(300, 300))
+        transparent.save('./' + OutputPath + '/' + os.path.basename(filename), compression='tiff_jpeg', quality=100, dpi=(300, 300))
 
         stop = timeit.default_timer()
 
-        print(filename + ' is ok! / Max_val = ' + str(max_val) + ' / time : ' + str(stop-start))
+        print(os.path.basename(filename) + ' is ok! / Max_val = ' + str(max_val) + ' / time : ' + str(stop-start))
 
 
 if __name__ == '__main__':
     replace_scale()
+    exit_program = input('press enter to quit')
 
 
