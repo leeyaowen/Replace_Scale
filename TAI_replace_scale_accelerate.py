@@ -31,9 +31,8 @@ def replace_scale(folder):
     for filename in all_file:
 
         try:
-            start = timeit.default_timer()
-
             lock.acquire()
+            start = timeit.default_timer()
             img_original = cv2.imread(filename)
             lock.release()
             img_original_gray = cv2.cvtColor(img_original, cv2.COLOR_BGR2GRAY)
