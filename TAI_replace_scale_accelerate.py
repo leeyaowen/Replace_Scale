@@ -50,20 +50,16 @@ def replace_scale(folder):
                 with open('val_lower_than_0point8.txt', mode='a') as F:
                     F.write(os.path.basename(filename) + ' Max_val = ' + str(
                         max_val) + ' / Path: ' + OutputPath + '/' + folder + '\n')
-                    lock.release()
-
-            rgb_size = 30
-            rgb_values = img_original[top_left[1] - rgb_size:top_left[1], top_left[0]:top_left[0] + rgb_size]
-
-            mean_blue = int(np.round(np.mean(rgb_values[:, :, 0])))
-            mean_green = int(np.round(np.mean(rgb_values[:, :, 1])))
-            mean_red = int(np.round(np.mean(rgb_values[:, :, 2])))
-
-            del img_original
-            del img_original_gray
-            del scale_original
+                lock.release()
 
             if max_val >= 0.5:
+                rgb_size = 30
+                rgb_values = img_original[top_left[1] - rgb_size:top_left[1], top_left[0]:top_left[0] + rgb_size]
+
+                mean_blue = int(np.round(np.mean(rgb_values[:, :, 0])))
+                mean_green = int(np.round(np.mean(rgb_values[:, :, 1])))
+                mean_red = int(np.round(np.mean(rgb_values[:, :, 2])))
+
                 with Image.open(filename) as base_image, Image.open(
                         './scale/dpi300_alpha.tif') as scale_original_4c, Image.open('./scale/dpi600.tif') as watermark:
                     width, height = base_image.size
@@ -74,16 +70,21 @@ def replace_scale(folder):
                     transparent.save('./' + OutputPath + '/' + folder + '/' + os.path.basename(filename),
                                      compression='tiff_jpeg', quality=100, dpi=(300, 300))
 
+            del img_original
+            del img_original_gray
+            del scale_original
+
             stop = timeit.default_timer()
 
             print(os.path.basename(filename) + ' is ok! / Max_val = ' + str(max_val) + ' / time : ' + str(stop - start))
 
         except Exception:
-            print('error in %s' % os.path.basename(filename))
+            lock.release()
             lock.acquire()
+            print('error in %s' % os.path.basename(filename))
             with open('error.txt', mode='a') as F:
                 F.write('error in %s/%s/%s\n' % (InputPath, folder, os.path.basename(filename)))
-                lock.release()
+            lock.release()
             continue
 
 
