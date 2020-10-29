@@ -86,7 +86,8 @@ def replace_scale(filenames, folders):
         print(os.path.basename(filenames) + ' is ok! / Max_val = ' + str(max_val) + ' / time : ' + str(stop - start))
 
     except Exception:
-        lock.release()
+        if lock.locked():
+            lock.release()
         lock.acquire()
         print('error in %s' % os.path.basename(filenames))
         with open('error.txt', mode='a') as F:
